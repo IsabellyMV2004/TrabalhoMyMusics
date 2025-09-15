@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">AloDrawerMenu</string>
+    <string name="open_menu">Abrir</string>
+    <string name="close_menu">Fechar</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
