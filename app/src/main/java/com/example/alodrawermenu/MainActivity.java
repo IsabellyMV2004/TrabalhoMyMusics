@@ -55,7 +55,8 @@ public class MainActivity extends AppCompatActivity {
         navigationView.setNavigationItemSelectedListener(item->
         {
            if(item.getItemId()==R.id.it_nmusica){
-               cadastrarMusicas(null);
+               NovaMusicaFragment.setMusicaAlterar(null);
+               cadastrarMusicas((Genero) null);
            }
            if(item.getItemId()==R.id.it_lmusicas){
                FragmentTransaction fragmentTransaction=fragmentManager.beginTransaction();

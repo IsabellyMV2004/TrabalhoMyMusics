@@ -73,7 +73,9 @@ public class MusicasFragment extends Fragment {
         });
 
         lvMusicas.setOnItemClickListener((adapterView, view2, i, l) -> {
-            mainActivity.cadastrarMusicas((Genero)adapterView.getItemAtPosition(i));
+            Musica musicaSelecionada = (Musica) adapterView.getItemAtPosition(i);
+            NovaMusicaFragment.setMusicaAlterar(musicaSelecionada);
+            mainActivity.cadastrarMusicas((Genero) null);
         });
         carregarMusicas(view);
         return view;

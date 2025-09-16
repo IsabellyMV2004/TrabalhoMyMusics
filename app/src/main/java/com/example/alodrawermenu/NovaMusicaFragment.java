@@ -45,6 +45,7 @@ public class NovaMusicaFragment extends Fragment {
     private Spinner spGenero;
     private TextView tvDuracao;
     private Button btCadastrar;
+    private static Musica musicaAlterar = null;
 
     public NovaMusicaFragment() {
         // Required empty public constructor
@@ -66,6 +67,14 @@ public class NovaMusicaFragment extends Fragment {
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    public static void setMusicaAlterar(Musica musica){
+        musicaAlterar=musica;
+    }
+
+    public static Musica getMusicaAlterar(){
+        return musicaAlterar;
     }
 
     @Override
@@ -91,6 +100,88 @@ public class NovaMusicaFragment extends Fragment {
         etAno = view.findViewById(R.id.etAno);
         btCadastrar = view.findViewById(R.id.btCadastrar);
         carregarGeneros(view);
+        // --- preencher campos se estivermos em modo EDIÇÃO ---
+        Musica musicaParaEditar = NovaMusicaFragment.getMusicaAlterar();
+
+        if (musicaParaEditar != null) {
+            // Preenche campos simples
+            txtedTitulo.setText(musicaParaEditar.getTitulo() == null ? "" : musicaParaEditar.getTitulo());
+            etAno.setText(musicaParaEditar.getAno() == 0 ? "" : String.valueOf(musicaParaEditar.getAno()));
+            txtedInterp.setText(musicaParaEditar.getInterprete() == null ? "" : musicaParaEditar.getInterprete());
+
+            // SeekBar / duração (supondo que sua duração é inteiro em segundos no sb)
+            int duracaoSegundos = (int) musicaParaEditar.getDuracao();
+            sbDuracao.setProgress(duracaoSegundos);
+            int minutos = duracaoSegundos / 60;
+            int segundos = duracaoSegundos % 60;
+            tvDuracao.setText(String.format("%d:%02d", minutos, segundos));
+
+            // Selecionar o gênero no Spinner — fazemos via post para garantir que o adapter
+            // já esteja setado pelo carregarGeneros(view)
+            final int generoId = musicaParaEditar.getGenero() == null ? -1 : musicaParaEditar.getGenero().getId();
+            spGenero.post(() -> {
+                try {
+                    if (spGenero.getAdapter() == null) return; // adapter não criado ainda
+                    for (int i = 0; i < spGenero.getAdapter().getCount(); i++) {
+                        Object item = spGenero.getAdapter().getItem(i);
+                        if (item instanceof Genero) {
+                            Genero g = (Genero) item;
+                            if (g.getId() == generoId) {
+                                spGenero.setSelection(i);
+                                break;
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    // Proteção: se algo falhar aqui não quebramos o resto da tela
+                    ex.printStackTrace();
+                }
+            });
+        }
+
+        btCadastrar.setOnClickListener(e -> {
+            MusicaDAL dal = new MusicaDAL(view.getContext());
+
+            // validação básica dos campos (evita NumberFormatException)
+            String anoText = etAno.getText() == null ? "" : etAno.getText().toString().trim();
+            int ano = 0;
+            if (!anoText.isEmpty()) {
+                try { ano = Integer.parseInt(anoText); }
+                catch (NumberFormatException ex) { ano = 0; }
+            }
+
+            Genero generoSelecionado = null;
+            try {
+                Object sel = spGenero.getSelectedItem();
+                if (sel instanceof Genero) generoSelecionado = (Genero) sel;
+            } catch (Exception ex) { generoSelecionado = null; }
+
+            int duracaoAtual = sbDuracao.getProgress();
+
+            Musica musicaAtual = NovaMusicaFragment.getMusicaAlterar();
+            if (musicaAtual != null) {
+                // --- EDIÇÃO: atualiza o objeto e chama alterar() ---
+                musicaAtual.setTitulo(txtedTitulo.getText().toString().trim());
+                musicaAtual.setAno(ano);
+                musicaAtual.setInterprete(txtedInterp.getText().toString().trim());
+                musicaAtual.setDuracao(duracaoAtual);
+                if (generoSelecionado != null) musicaAtual.setGenero(generoSelecionado);
+
+                boolean ok = dal.alterar(musicaAtual);
+                if (ok) {
+                    // limpa o cache de edição para evitar reuso indesejado
+                    NovaMusicaFragment.setMusicaAlterar(null);
+                    Toast.makeText(getContext(), "Música atualizada com sucesso", Toast.LENGTH_SHORT).show();
+
+                    if (getActivity() != null) getActivity().getSupportFragmentManager().popBackStack();
+                } else {
+                    Toast.makeText(getContext(), "Erro ao atualizar música", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                cadastrarMusica(view);
+            }
+        });
+
 
         sbDuracao.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
