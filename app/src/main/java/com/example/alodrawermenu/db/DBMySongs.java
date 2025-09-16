@@ -27,7 +27,7 @@ public class DBMySongs extends SQLiteOpenHelper {
         db.execSQL("INSERT INTO genero (gen_nome) VALUES ('sertanejo')");
         db.execSQL("INSERT INTO genero (gen_nome) VALUES ('pop nacional')");
         db.execSQL("INSERT INTO genero (gen_nome) VALUES ('pop internacional')");
-     }
+    }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {

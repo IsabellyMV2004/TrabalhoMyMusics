@@ -1,5 +1,6 @@
 package com.example.alodrawermenu;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -7,6 +8,21 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.SeekBar;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.example.alodrawermenu.db.bean.Genero;
+import com.example.alodrawermenu.db.bean.Musica;
+import com.example.alodrawermenu.db.dal.GeneroDAL;
+import com.example.alodrawermenu.db.dal.MusicaDAL;
+
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -23,6 +39,12 @@ public class NovaMusicaFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    private EditText txtedInterp, txtedTitulo, etAno;
+    private SeekBar sbDuracao;
+    private Spinner spGenero;
+    private TextView tvDuracao;
+    private Button btCadastrar;
 
     public NovaMusicaFragment() {
         // Required empty public constructor
@@ -52,6 +74,7 @@ public class NovaMusicaFragment extends Fragment {
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
+
         }
     }
 
@@ -59,6 +82,123 @@ public class NovaMusicaFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_nova_musica, container, false);
+        View view = inflater.inflate(R.layout.fragment_nova_musica, container, false);
+        txtedInterp = view.findViewById(R.id.txtedInterp);
+        sbDuracao = view.findViewById(R.id.sbDuracao);
+        spGenero = view.findViewById(R.id.spGenero);
+        tvDuracao = view.findViewById(R.id.tvDuracao);
+        txtedTitulo = view.findViewById(R.id.txtedTitulo);
+        etAno = view.findViewById(R.id.etAno);
+        btCadastrar = view.findViewById(R.id.btCadastrar);
+        carregarGeneros(view);
+
+        sbDuracao.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                int minutos = i / 60;
+                int segundos = i % 60;
+
+                // Formata sempre com 2 dígitos nos segundos (ex.: 3:05)
+                String tempoFormatado = String.format("%d:%02d", minutos, segundos);
+
+                tvDuracao.setText(tempoFormatado);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        btCadastrar.setOnClickListener(e -> {
+            cadastrarMusica(view);
+        });
+
+        return view;
     }
+
+    private void carregarGeneros(View view){
+        GeneroDAL dal =new GeneroDAL(view.getContext());
+        List<Genero> generoList=dal.get("");
+        spGenero.setAdapter(new ArrayAdapter<Genero>(view.getContext(),
+                android.R.layout.simple_spinner_dropdown_item,generoList));
+    }
+
+    private boolean verificarAno(){
+        int anoAtual = LocalDate.now().getYear();
+        int anoMusica = Integer.parseInt(etAno.getText().toString());
+        if(anoMusica>anoAtual) {
+            Toast.makeText(getContext(), "Digite um ano válido!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validarCampos() {
+        String titulo = txtedTitulo.getText().toString().trim();
+        String interprete = txtedInterp.getText().toString().trim();
+        String anoStr = etAno.getText().toString().trim();
+        int duracao = sbDuracao.getProgress();
+        Genero generoSelecionado = (Genero) spGenero.getSelectedItem();
+
+        if (titulo.isEmpty()) {
+            Toast.makeText(getContext(), "Digite o título", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (interprete.isEmpty()) {
+            Toast.makeText(getContext(), "Digite o intérprete", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (anoStr.isEmpty()) {
+            Toast.makeText(getContext(), "Digite o ano", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        try {
+            Integer.parseInt(anoStr);
+        } catch (NumberFormatException e) {
+            Toast.makeText(getContext(), "Ano inválido", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (duracao <= 0) {
+            Toast.makeText(getContext(), "Defina a duração da música", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (generoSelecionado == null) {
+            Toast.makeText(getContext(), "Selecione um gênero", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true; // Todos os campos preenchidos corretamente
+    }
+
+    private boolean cadastrarMusica(View view){
+        if(validarCampos() && verificarAno()) {
+            Genero generoSelecionado = (Genero) spGenero.getSelectedItem();
+            double duracaoMinutos = sbDuracao.getProgress() / 60.0;
+            int ano;
+            try {
+                ano = Integer.parseInt(etAno.getText().toString());
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(), "Digite um ano válido!", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            Musica musica = new Musica(ano, txtedTitulo.getText().toString(), txtedInterp.getText().toString(), generoSelecionado, duracaoMinutos);
+            MusicaDAL dal = new MusicaDAL(view.getContext());
+            dal.salvar(musica);
+            Toast.makeText(getContext(), "Música " + musica.getTitulo() + " cadastrada!", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        return false;
+    }
+
 }

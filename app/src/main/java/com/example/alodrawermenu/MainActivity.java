@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout frameLayout;
     private GenerosFragment generosFragment=new GenerosFragment();
     private NovaMusicaFragment novaMusicaFragment=new NovaMusicaFragment();
+    private MusicasFragment musicasFragment = new MusicasFragment();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,7 +57,11 @@ public class MainActivity extends AppCompatActivity {
            if(item.getItemId()==R.id.it_nmusica){
                cadastrarMusicas(null);
            }
-           if(item.getItemId()==R.id.it_lmusicas){}
+           if(item.getItemId()==R.id.it_lmusicas){
+               FragmentTransaction fragmentTransaction=fragmentManager.beginTransaction();
+               fragmentTransaction.replace(frameLayout.getId(),musicasFragment);
+               fragmentTransaction.commit();
+           }
            if(item.getItemId()==R.id.it_lgeneros){
                FragmentTransaction fragmentTransaction=fragmentManager.beginTransaction();
                fragmentTransaction.replace(frameLayout.getId(),generosFragment);
