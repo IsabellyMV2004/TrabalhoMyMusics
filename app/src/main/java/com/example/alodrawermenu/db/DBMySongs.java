@@ -27,6 +27,10 @@ public class DBMySongs extends SQLiteOpenHelper {
         db.execSQL("INSERT INTO genero (gen_nome) VALUES ('sertanejo')");
         db.execSQL("INSERT INTO genero (gen_nome) VALUES ('pop nacional')");
         db.execSQL("INSERT INTO genero (gen_nome) VALUES ('pop internacional')");
+
+        db.execSQL("INSERT INTO musica (mus_ano, mus_titulo, mus_interprete, mus_genero, mus_duracao)" +
+                "VALUES (1986, 'Tempo Perdido', 'Legião Urbana', 1, 4.2)");
+
     }
 
     @Override
