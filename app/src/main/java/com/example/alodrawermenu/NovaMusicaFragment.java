@@ -47,6 +47,8 @@ public class NovaMusicaFragment extends Fragment {
     private Button btCadastrar;
     private static Musica musicaAlterar = null;
 
+    private int alterarID = -1;
+
     public NovaMusicaFragment() {
         // Required empty public constructor
     }
@@ -105,6 +107,7 @@ public class NovaMusicaFragment extends Fragment {
 
         if (musicaParaEditar != null) {
             // Preenche campos simples
+            alterarID = musicaAlterar.getId();
             txtedTitulo.setText(musicaParaEditar.getTitulo() == null ? "" : musicaParaEditar.getTitulo());
             etAno.setText(musicaParaEditar.getAno() == 0 ? "" : String.valueOf(musicaParaEditar.getAno()));
             txtedInterp.setText(musicaParaEditar.getInterprete() == null ? "" : musicaParaEditar.getInterprete());
@@ -283,10 +286,21 @@ public class NovaMusicaFragment extends Fragment {
                 Toast.makeText(getContext(), "Digite um ano válido!", Toast.LENGTH_SHORT).show();
                 return false;
             }
-            Musica musica = new Musica(ano, txtedTitulo.getText().toString(), txtedInterp.getText().toString(), generoSelecionado, duracaoMinutos);
-            MusicaDAL dal = new MusicaDAL(view.getContext());
-            dal.salvar(musica);
-            Toast.makeText(getContext(), "Música " + musica.getTitulo() + " cadastrada!", Toast.LENGTH_SHORT).show();
+            Musica musica;
+            if(alterarID == -1) {
+                musica = new Musica(ano, txtedTitulo.getText().toString(), txtedInterp.getText().toString(), generoSelecionado, duracaoMinutos);
+                MusicaDAL dal = new MusicaDAL(view.getContext());
+                dal.salvar(musica);
+                Toast.makeText(getContext(), "Música " + musica.getTitulo() + " cadastrada!", Toast.LENGTH_SHORT).show();
+            }else {
+                musica = new Musica(alterarID, ano, txtedTitulo.getText().toString(), txtedInterp.getText().toString(), generoSelecionado, duracaoMinutos);
+                MusicaDAL dal = new MusicaDAL(view.getContext());
+                dal.alterar(musica);
+                alterarID = -1;
+                Toast.makeText(getContext(), "Música " + musica.getTitulo() + " alterada!", Toast.LENGTH_SHORT).show();
+            }
+
+
             return true;
         }
         return false;
